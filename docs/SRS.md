@@ -50,7 +50,7 @@ The program is run as `python Ex0.py file.nrrd file.csv file.mp4`.
 | NFR-3 | Memory: the whole volume is loaded into memory once (a 500^3 uint8 volume is about 125 MB). |
 | NFR-4 | Maintainability: reading NRRD, the plane, the projection and writing the video shall be separate modules, so each can be changed and tested on its own. |
 | NFR-5 | Testability: every functional requirement shall be covered by at least one automated test (pytest). |
-| NFR-6 | Portability: the program shall run with Python 3 on Windows, using only the packages in `requirements.txt`. |
+| NFR-6 | Portability: the program shall run with Python 3 on Windows, macOS and Linux, using only the packages in `requirements.txt`. File paths are handled with `pathlib`, no path is hard-coded, and no tool needs to be installed separately. |
 
 ## 5. Design decisions (closing the ambiguities)
 | # | Question | Decision | Reason |
