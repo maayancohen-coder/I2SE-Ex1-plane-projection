@@ -24,7 +24,7 @@
 |---|----------|----------|--------|
 | 1 | `p` is not an integer: nearest voxel or trilinear interpolation? | Nearest neighbour: round each coordinate of `p` to the nearest integer. | Fastest option (1 memory access per pixel), needed for the 30 fps requirement. Keeps original voxel values, which makes testing exact. Matches `v = M[p]` in the given algorithm. The visual difference is expected to be small; this will be checked in the experiment. |
 | 2 | `x` is not an integer: round or floor? Width of `E`? | Round to the nearest integer; exact halves round up (2.5 -> 3). The width of `E` is `Dbc + 1`. Same rounding rule is used for `p` (decision 1). | Keeps every row centred. One consistent rounding rule across the system. The last row reaches column `Dbc`, so `Dbc + 1` columns are needed. Note: Python's `round()` rounds halves to even, so it is not used. |
-| 3 | `Dab`, `Dbc` are not integers: exact size of `E`? | | |
+| 3 | `Dab`, `Dbc` are not integers: exact size of `E`? | Height: `floor(Dab)` rows. Width: `round(Dbc) + 1` columns. | The problem statement projects points "within the triangle". With `floor(Dab)` rows, `a1` and `a2` never pass `b` and `c`, so every pixel is inside the triangle (the original loop `y < Dab` can step past `b` in the last row). The width follows decision 2. |
 | 4 | The apex `a` is never sampled (step before sample): keep or fix? | | |
 | 5 | `d12 = 0`: division by zero | | |
 | 6 | Index coordinates or physical (mm) coordinates? | | |
