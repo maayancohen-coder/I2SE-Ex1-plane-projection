@@ -2,9 +2,20 @@
 
 ## 1. Introduction
 ### 1.1 Purpose
+This document specifies the requirements and the design decisions for a program that projects a plane of a 3D volume into a 2D image, and writes a sequence of such images as a video. It is intended for the developer, the testers and the course staff.
+
 ### 1.2 Scope
+The scope (in scope, out of scope and constraints) is defined in the [README](../README.md). This document refines it into numbered requirements (sections 3, 4) and closes the open points of the assignment (section 5).
+
 ### 1.3 Definitions
-- Volume `M`, voxel, plane, isosceles triangle / trapezoid, output image `E`.
+- **Volume `M`**: a 3D matrix of voxel values, read from an NRRD file, of size `sx * sy * sz`.
+- **Voxel**: one cell of `M` (a 3D pixel), accessed by integer indices `M[x][y][z]`.
+- **Plane**: given by 3 points (isosceles triangle `a, b, c` with `|ab| = |ac|`) or 4 points (isosceles trapezoid `a', a'', b, c`).
+- **`Dab`, `Dbc`**: the length of a leg and the length of the base.
+- **`a1`, `a2`**: the two points that move down the legs, one step per row.
+- **`d12`**: the distance between `a1` and `a2` in the current row.
+- **Output image `E`**: the 2D projection of one plane.
+- **Frame**: one image of the output video; one frame per plane.
 - `EPSILON = 1e-9`: tolerance for comparing floating-point values to zero.
 - `TOLERANCE = 1e-3`: allowed difference between `|ab|` and `|ac|` (in voxels) for user input.
 ## 2. Overall description
