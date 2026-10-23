@@ -43,8 +43,14 @@ The program is run as `python Ex0.py file.nrrd file.csv file.mp4`.
 | FR-10 | The program shall write one frame per plane, in CSV order, with the frame size of decision 11, at 10 frames per second. | 11 |
 
 ## 4. Non-functional requirements
-- Performance: >= 30 fps on a 500^3 volume (target 100 fps).
-- Robustness: invalid input is reported, never crashes.
+| ID | Requirement |
+|----|-------------|
+| NFR-1 | Performance: the projection of one plane shall take on average at most 1/30 s (at least 30 fps), target 1/100 s (100 fps). Measured on `croissant.nrrd` (500^3, uint8) with planes that cross the whole volume, averaged over at least 100 planes. Reading the NRRD file and encoding the video are not included. |
+| NFR-2 | Robustness: the program shall never end with an unhandled exception; every error is reported as in FR-3 and FR-5. |
+| NFR-3 | Memory: the whole volume is loaded into memory once (a 500^3 uint8 volume is about 125 MB). |
+| NFR-4 | Maintainability: reading NRRD, the plane, the projection and writing the video shall be separate modules, so each can be changed and tested on its own. |
+| NFR-5 | Testability: every functional requirement shall be covered by at least one automated test (pytest). |
+| NFR-6 | Portability: the program shall run with Python 3 on Windows, using only the packages in `requirements.txt`. |
 
 ## 5. Design decisions (closing the ambiguities)
 | # | Question | Decision | Reason |
