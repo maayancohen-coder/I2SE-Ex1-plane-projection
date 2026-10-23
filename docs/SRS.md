@@ -10,7 +10,7 @@
 ## 2. Overall description
 ### 2.1 Inputs
 - NRRD file
-- CSV file: format TBD (one plane per row? 9 or 12 numbers?)
+- CSV file: a list of planes, format defined in decision 10.
 ### 2.2 Outputs
 - mp4 video, one frame per plane
 
@@ -32,3 +32,4 @@
 | 7 | Orientation of `E`: `E[x][y]` vs `E[y][x]` | `E` is stored row-major as `E[y][x]` (row, then column). Row 0 is the apex `a` (top), column 0 is on the `b` side (left), the last column is on the `c` side (right). | This is the standard image layout in numpy, video libraries and 2D arrays in general, so frames can be written without transposing. Storing `E[x][y]` as written in the assignment would produce rotated and mirrored frames. Fixing the sides of `a`, `b`, `c` makes the output predictable and testable. |
 | 8 | 16/32-bit values: normalisation to 8-bit for video | uint8 volumes are used as is. Other types: compute once, on the whole volume, the 0.5 and 99.5 percentiles (`lo`, `hi`), map `[lo, hi]` linearly to `[0, 255]` and clip values outside. The same mapping is used for all frames. | One mapping for the whole volume keeps the same tissue at the same brightness in every frame (per-frame normalisation would flicker). Percentiles instead of min/max ignore a few extreme voxels: in MRHead the max is 279 but 99.5% of voxels are below 141, so min/max would make the image dark. Computed once at load time, so it does not affect fps. |
 | 9 | Invalid input: not isosceles, collinear points, bad CSV | File errors (missing or unreadable NRRD/CSV, not 3D, size out of range, unsupported type): stop with a clear error message. Row errors (wrong number of values, non-numeric value) and invalid planes (`abs(|ab| - |ac|) > TOLERANCE`, collinear or identical points): write a black frame and print a warning with the row number. A plane outside the volume is valid and gives a black frame. | Without a valid volume nothing can be computed. One bad row should not cancel the whole video, and writing a black frame keeps frame `i` aligned with CSV row `i`. User input needs a looser tolerance than `EPSILON`. |
+| 10 | CSV format | One plane per line, comma-separated numbers (integers or decimals) in index coordinates (decision 6). 9 values = triangle `a, b, c` (apex, then base from left to right). 12 values = trapezoid `a', a'', b, c` (top edge left to right, then base left to right; legs are `a'->b` and `a''->c`). Empty lines and lines starting with `#` are ignored and do not produce frames. No header line. | The assignment only says "3 or 4 points". A fixed point order is needed to know which point is the apex and which side is left (decision 7). Comments make test files readable. Frame `i` in the video is the `i`-th non-comment line. |
