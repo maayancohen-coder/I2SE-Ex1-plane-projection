@@ -28,7 +28,19 @@ The program is run as `python Ex0.py file.nrrd file.csv file.mp4`.
 - **mp4 video**: one frame for each plane in the CSV, in the same order. Frame size as in decision 11. Pixel values are 8-bit grayscale, normalised as in decision 8. Playback rate: 10 frames per second.
 - **Console**: a warning for every invalid CSV row (with its row number), and a clear error message if the program cannot run (decision 9).
 
-## 3. Functional requirements 
+## 3. Functional requirements
+| ID | Requirement | Related decisions |
+|----|-------------|-------------------|
+| FR-1 | The program shall accept exactly three arguments (NRRD file, CSV file, output mp4 file) and print a usage message otherwise. | |
+| FR-2 | The program shall read a 3D volume from an NRRD file with raw or gzip encoding and a supported type (section 2.1). | |
+| FR-3 | The program shall stop with a clear error message if the NRRD or CSV file is missing, unreadable, not 3D, out of the size range, or of an unsupported type. | 9 |
+| FR-4 | The program shall read the planes from the CSV file in the format of decision 10. | 10 |
+| FR-5 | The program shall detect invalid rows and invalid planes, write a black frame for each of them, and print a warning with the row number. | 9 |
+| FR-6 | The program shall project a triangle plane into an image `E` using the given algorithm with decisions 1-5 and 7. | 1-5, 7 |
+| FR-7 | The program shall project a trapezoid plane in the same way, with the legs `a'->b` and `a''->c`. | 10 |
+| FR-8 | Points of the plane outside `M` shall get the value 0. | |
+| FR-9 | The program shall normalise voxel values to 8 bit as in decision 8. | 8 |
+| FR-10 | The program shall write one frame per plane, in CSV order, with the frame size of decision 11, at 10 frames per second. | 11 |
 
 ## 4. Non-functional requirements
 - Performance: >= 30 fps on a 500^3 volume (target 100 fps).
