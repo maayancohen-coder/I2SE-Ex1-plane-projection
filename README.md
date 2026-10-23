@@ -3,6 +3,17 @@
 Plane projection of a 3D volume: extracting a 2D image from a 3D raster (NRRD) along an arbitrary plane.
 
 Course: Introduction to Software Engineering (OOP, OOD), Ex1.
+Author: Maayan Cohen
+Status: in progress (requirements and design)
+
+## Explainer video
+
+A 65-second walkthrough of the algorithm on the MRHead volume: the triangle `a, b, c`,
+the unit vectors, the row-by-row sweep, the centring formula and why the triangle is isosceles.
+
+[![Explainer video](docs/media/explainer_preview.png)](docs/media/plane_projection_explainer.mp4)
+
+Click the image to open the video ([docs/media/plane_projection_explainer.mp4](docs/media/plane_projection_explainer.mp4)).
 
 ## Problem
 
@@ -17,13 +28,30 @@ is sampled into `E`; points outside `M` get the value 0.
 
 In scope:
 - Reading 3D volumes in NRRD format (raw and gzip encodings).
+- Reading a list of planes from a CSV file and validating them.
 - Projecting a plane given by 3 points (triangle) or 4 points (trapezoid).
-- A demo that reads a list of planes from a CSV file and writes one video frame per plane.
-- Runtime of at least 30 fps (target 100 fps) on a `500^3` volume.
+- Writing the projected images as video frames, in the order of the CSV.
+- Clear error messages for invalid input (missing files, bad CSV rows, invalid planes).
 
 Out of scope:
-- A graphical user interface.
-- File formats other than NRRD.
+- A graphical user interface (command line only).
+- 3D rendering or display of the volume (use 3D Slicer for that).
+- File formats other than NRRD (e.g. DICOM, NIfTI).
+- Editing or writing volumes: the input file is read only.
+
+## Constraints
+
+| Constraint | Value | Source |
+|------------|-------|--------|
+| Volume size | `1 <= sx, sy, sz < 2^10` | Problem definition |
+| Voxel values | unsigned 8, 16 or 32 bit | Problem definition |
+| Performance | at least 30 fps on a `500^3` volume (target 100 fps) | Implementation requirements |
+| Language | Python | Implementation requirements (Java, Python, C, C++) |
+| Input format | NRRD | Data |
+| Command line | `python Ex0.py file.nrrd file.csv file.mp4` | To Do, item 7 |
+
+Note: the assignment specifies unsigned values, but the reference file `MRHead.nrrd` is signed 16 bit (`short`).
+Signed 16-bit volumes are also supported; see [docs/SRS.md](docs/SRS.md).
 
 See [docs/SRS.md](docs/SRS.md) for the full requirements and design decisions.
 

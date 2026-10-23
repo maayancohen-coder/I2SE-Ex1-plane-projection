@@ -224,4 +224,6 @@ __marimo__/
 *.nrrd
 # Generated output videos and frames
 *.mp4
+# ...except the explainer video in the docs
+!docs/media/*.mp4
 output/
