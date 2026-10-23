@@ -13,7 +13,7 @@
 ### 2.2 Outputs
 - mp4 video, one frame per plane
 
-## 3. Functional requirements
+## 3. Functional requirements 
 
 ## 4. Non-functional requirements
 - Performance: >= 30 fps on a 500^3 volume (target 100 fps).
@@ -22,8 +22,7 @@
 ## 5. Design decisions (closing the ambiguities)
 | # | Question | Decision | Reason |
 |---|----------|----------|--------|
-| 1 | `p` is not an integer: nearest voxel or trilinear interpolation? | | |
-| 2 | `x` is not an integer: round or floor? Width of `E`? | | |
+| 1 | `p` is not an integer: nearest voxel or trilinear interpolation? | Nearest neighbour: round each coordinate of `p` to the nearest integer. | Fastest option (1 memory access per pixel), needed for the 30 fps requirement. Keeps original voxel values, which makes testing exact. Matches `v = M[p]` in the given algorithm. The visual difference is expected to be small; this will be checked in the experiment. || 2 | `x` is not an integer: round or floor? Width of `E`? | | |
 | 3 | `Dab`, `Dbc` are not integers: exact size of `E`? | | |
 | 4 | The apex `a` is never sampled (step before sample): keep or fix? | | |
 | 5 | `d12 = 0`: division by zero | | |
