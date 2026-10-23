@@ -218,3 +218,10 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# --- Project specific ---
+# Large volume files are not committed; see data/README.md for sources
+*.nrrd
+# Generated output videos and frames
+*.mp4
+output/
