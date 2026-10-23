@@ -20,10 +20,13 @@ The scope (in scope, out of scope and constraints) is defined in the [README](..
 - `TOLERANCE = 1e-3`: allowed difference between `|ab|` and `|ac|` (in voxels) for user input.
 ## 2. Overall description
 ### 2.1 Inputs
-- NRRD file
-- CSV file: a list of planes, format defined in decision 10.
+The program is run as `python Ex0.py file.nrrd file.csv file.mp4`.
+- **NRRD file**: a 3D volume. Supported encodings: raw and gzip. Supported types: unsigned 8, 16, 32 bit, and signed 16 bit (as in MRHead). Each size must satisfy `1 <= size < 2^10`.
+- **CSV file**: a list of planes, format defined in decision 10.
+
 ### 2.2 Outputs
-- mp4 video, one frame per plane
+- **mp4 video**: one frame for each plane in the CSV, in the same order. Frame size as in decision 11. Pixel values are 8-bit grayscale, normalised as in decision 8. Playback rate: 10 frames per second.
+- **Console**: a warning for every invalid CSV row (with its row number), and a clear error message if the program cannot run (decision 9).
 
 ## 3. Functional requirements 
 
