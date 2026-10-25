@@ -32,13 +32,12 @@ if trapezoid: start1 = a',  start2 = a''
 # 2. Lengths and unit vectors
 Dab  = dist(start1, b)                          # = dist(start2, c) within TOLERANCE [D9]
 Dbc  = dist(b, c)
-Dmax = max(Dbc, dist(start1, start2))           # longer parallel edge (0 for a triangle)
 v_ab = (b - start1) / Dab
 v_ac = (c - start2) / Dab
 
 # 3. Output image
 H = floor(Dab) + 1                              # rows: distances 0 .. floor(Dab) [D3, D4]
-W = round_half_up(Dmax) + 1                     # columns [D2, D3]
+W = round_half_up(Dbc) + 1                     # columns [D2, D3]
 E = H x W image filled with 0
 
 # 4. Sweep the plane row by row
@@ -48,13 +47,13 @@ for y = 0 .. H - 1:
     d12 = dist(a1, a2)
 
     if d12 < EPSILON:                           # single-point row, e.g. the apex [D5]
-        E[y][round_half_up(Dmax / 2)] = sample(M, a1)
+        E[y][round_half_up(Dbc / 2)] = sample(M, a1)
         continue
 
     dp = (a2 - a1) / d12                        # unit step along the row
     for x1 = 0 .. floor(d12):
         p = a1 + x1 * dp
-        x = round_half_up(Dmax / 2 - d12 / 2 + x1)      # centre the row [D2]
+        x = round_half_up(Dbc / 2 - d12 / 2 + x1)      # centre the row [D2]
         E[y][x] = sample(M, p)
 
 return E
@@ -65,12 +64,11 @@ return E
 |----------|------|-----|
 | `M[p]` with non-integer `p` | `sample(M, p)`, nearest voxel, 0 outside `M` | [D1] |
 | `x` not an integer | `round_half_up` | [D2] |
-| size `Dab * Dbc` | `(floor(Dab) + 1) x (round(Dmax) + 1)` | [D3], fits every row |
+| size `Dab * Dbc` | `(floor(Dab) + 1) x (round(Dbc) + 1)` | [D3], fits every row |
 | step, then sample (apex missing) | sample, then step (apex included) | [D4] |
 | `dp = .../d12` with `d12 = 0` | single-point row | [D5] |
 | `E[x][y]` | `E[y][x]` | [D7] |
 | `a1 = a1 + v(ab)` repeated | `a1 = start1 + y * v_ab` | avoids accumulated floating-point error |
-| width from `Dbc` | width from `Dmax` | a trapezoid whose top edge is longer than its base |
 
 ## Complexity
 Every pixel of `E` is sampled once: `O(H * W)` per plane, independent of the size of `M`.
