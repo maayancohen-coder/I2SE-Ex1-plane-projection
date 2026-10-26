@@ -3,7 +3,7 @@
 Plane projection of a 3D volume: extracting a 2D image from a 3D raster (NRRD) along an arbitrary plane.
 
 - Course: Introduction to Software Engineering (OOP, OOD), Ex1.
-- Author: Maayan Cohen
+- Authors: Maayan Cohen, Talya Elmaliah
 - Status: in progress (requirements and design)
 
 ## Explainer video
