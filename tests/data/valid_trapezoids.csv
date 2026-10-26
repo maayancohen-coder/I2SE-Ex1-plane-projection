@@ -1,0 +1,10 @@
+# Valid trapezoids for the phantom (200 x 200 x 200).
+# Format (SRS decision 10): a'x,a'y,a'z, a''x,a''y,a''z, bx,by,bz, cx,cy,cz
+# Top edge a'-a'' and base b-c are mirror images around x = 100, so the legs a'->b and a''->c are equal
+# and all four points are on one plane. The top edge is not longer than the base (assignment Q&A).
+# 1. flat trapezoid (same z)
+70,40,100,130,40,100,20,160,100,180,160,100
+# 2. tilted trapezoid: top edge at z=70, base at z=130
+70,40,70,130,40,70,20,160,130,180,160,130
+# 3. rectangle (top edge = base, legs parallel): the same pixels as the slice z = 100 of the volume
+40,30,100,160,30,100,40,170,100,160,170,100
