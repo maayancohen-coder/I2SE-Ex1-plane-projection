@@ -1,0 +1,9 @@
+# Planes outside the volume (SRS FR-8): valid input, no warning; points outside M get 0.
+# 1. completely outside: x from 220 to 380 (the volume is 0..199)
+300,10,100,220,190,100,380,190,100
+# 2. completely outside on the negative side: z = -50 (Python must not read M[-50] from the end of the array)
+100,10,-50,20,190,-50,180,190,-50
+# 3. partly outside: a large triangle that crosses the borders of the volume
+100,-50,100,-60,250,100,260,250,100
+# 4. inside the volume but outside the spherical shell (corner of the phantom): all pixels are 0
+10,5,10,5,15,10,15,15,10

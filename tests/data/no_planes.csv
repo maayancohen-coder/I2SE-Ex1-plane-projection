@@ -1,0 +1,5 @@
+# This file contains no planes: only comments and empty lines.
+# Expected (SRS decision 9, FR-3): a clear error message, no mp4 file.
+
+# Another comment after an empty line.
+

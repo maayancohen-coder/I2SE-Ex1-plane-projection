@@ -1,0 +1,16 @@
+# Invalid CSV rows (SRS decision 9): each bad row gives a warning with its row number and a black frame.
+# Row 2 is valid, to check that frames stay aligned with the rows.
+# 1. only 8 values
+100,10,100,20,190,100,180,190
+# 2. valid triangle (not an error)
+100,10,100,20,190,100,180,190,100
+# 3. 10 values
+100,10,100,20,190,100,180,190,100,5
+# 4. 11 values (neither 9 nor 12)
+100,10,100,20,190,100,180,190,100,5,5
+# 5. a value that is not a number
+100,10,abc,20,190,100,180,190,100
+# 6. an empty value
+100,,100,20,190,100,180,190,100
+# 7. semicolons instead of commas
+100;10;100;20;190;100;180;190;100

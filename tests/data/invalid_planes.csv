@@ -1,0 +1,18 @@
+# Invalid planes (SRS decision 9, assignment Q&A): each gives a warning with its row number and a black frame.
+# Each row breaks exactly one rule.
+# 1. triangle, not isosceles (|ab| = 197.0, |ac| = 186.8)
+100,10,100,20,190,100,150,190,100
+# 2. triangle, legs differ by 0.002 > TOLERANCE (the valid twin, 0.0005, is in valid_triangles.csv)
+100,10,100,20,190,100,180.005,190,100
+# 3. triangle, isosceles but collinear (a is the middle of b and c)
+100,100,100,50,100,100,150,100,100
+# 4. triangle, b = c (isosceles, but no base)
+100,10,100,100,190,100,100,190,100
+# 5. triangle, all three points identical
+100,100,100,100,100,100,100,100,100
+# 6. trapezoid, legs not equal (|a'b| = 130.0, |a''c| = 126.5)
+70,40,100,140,40,100,20,160,100,180,160,100
+# 7. inverted trapezoid: top edge (160) longer than the base (60)
+20,40,100,180,40,100,70,160,100,130,160,100
+# 8. trapezoid, equal legs but not on one plane (a'' is 10 voxels above the plane z = 100)
+70,40,100,131.0102051,40,110,20,160,100,180,160,100
