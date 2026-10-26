@@ -8,3 +8,5 @@
 70,40,70,130,40,70,20,160,130,180,160,130
 # 3. rectangle (top edge = base, legs parallel): the same pixels as the slice z = 100 of the volume
 40,30,100,160,30,100,40,170,100,160,170,100
+# 4. decimal coordinates, mirror around x = 100.5
+70.5,40.5,99.5,130.5,40.5,99.5,20.5,160.25,100.75,180.5,160.25,100.75

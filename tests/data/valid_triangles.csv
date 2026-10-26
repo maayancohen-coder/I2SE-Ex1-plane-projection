@@ -4,3 +4,7 @@
 100,10,60,20,190,140,180,190,140
 # small triangle
 100,100,100,95,108,100,105,108,100
+# 4. decimal coordinates, including .5 values (round half up: 100.5 -> 101)
+100.5,20.25,99.5,40.5,150.75,120.25,160.5,150.75,120.25
+# 5. almost isosceles: the legs differ by 0.0005, less than TOLERANCE = 0.001, so it is valid
+100,10,100,20,190,100,180.0012,190,100
