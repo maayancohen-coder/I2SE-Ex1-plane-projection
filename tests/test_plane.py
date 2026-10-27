@@ -1,7 +1,11 @@
+from pathlib import Path
+
 import pytest
 
-from projection.errors import PlaneError
-from projection.plane import Trapezoid, Triangle
+from projection.errors import PlaneError, PlaneFileError
+from projection.plane import Trapezoid, Triangle, parse_planes
+
+DATA = Path(__file__).parent / "data"
 
 
 # ---------- valid planes ----------
@@ -56,3 +60,60 @@ def test_invalid_triangle(points, reason):
 def test_invalid_trapezoid(points, reason):
     with pytest.raises(PlaneError, match=reason):
         Trapezoid(*points).validate()
+        
+        # ---------- CSV files ----------
+
+def test_all_valid_triangles_in_file():
+    rows = parse_planes(DATA / "valid_triangles.csv")
+    assert len(rows) == 5
+    assert all(row.is_valid for row in rows)
+    assert all(isinstance(row.plane, Triangle) for row in rows)
+
+
+def test_all_valid_trapezoids_in_file():
+    rows = parse_planes(DATA / "valid_trapezoids.csv")
+    assert len(rows) == 4
+    assert all(row.is_valid for row in rows)
+    assert all(isinstance(row.plane, Trapezoid) for row in rows)
+
+
+def test_outside_planes_are_valid():
+    rows = parse_planes(DATA / "outside.csv")
+    assert all(row.is_valid for row in rows)
+
+
+def test_every_invalid_plane_is_rejected():
+    rows = parse_planes(DATA / "invalid_planes.csv")
+    assert len(rows) == 8
+    assert not any(row.is_valid for row in rows)
+
+
+def test_invalid_rows_keep_their_line_numbers():
+    rows = parse_planes(DATA / "invalid_rows.csv")
+    # every non-comment line is a row; the line numbers are the lines in the file
+    assert [row.line for row in rows] == [4, 6, 8, 10, 12, 14, 16]
+    assert [row.is_valid for row in rows] == [False, True, False, False, False, False, False]
+
+
+def test_invalid_row_messages():
+    rows = parse_planes(DATA / "invalid_rows.csv")
+    errors = [row.error for row in rows if not row.is_valid]
+    assert "expected 9 or 12 values, got 8" in errors[0]
+    assert "not a number" in errors[3]
+
+
+def test_no_planes_is_a_file_error():
+    with pytest.raises(PlaneFileError, match="no planes"):
+        parse_planes(DATA / "no_planes.csv")
+
+
+def test_missing_csv_is_a_file_error(tmp_path):
+    with pytest.raises(PlaneFileError):
+        parse_planes(tmp_path / "missing.csv")
+
+
+def test_spaces_and_windows_line_endings(tmp_path):
+    f = tmp_path / "planes.csv"
+    f.write_bytes(b"# comment\r\n100, 10, 100, 20, 190, 100, 180, 190, 100\r\n")
+    rows = parse_planes(f)
+    assert len(rows) == 1 and rows[0].is_valid and rows[0].line == 2
