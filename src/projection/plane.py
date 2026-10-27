@@ -1,10 +1,14 @@
 """The projection plane: triangle or trapezoid, built from 3 or 4 points, with input validation."""
+import csv
 import math
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Optional, Sequence
 
 import numpy as np
 
-from projection.errors import PlaneError
+from projection.errors import PlaneError, PlaneFileError
 
 TOLERANCE = 1e-3   # allowed difference for user input; the EPS = 0.001 of the assignment Q&A
 EPSILON = 1e-9     # tolerance for comparing computed floating-point values to zero
@@ -87,3 +91,73 @@ class Trapezoid(Plane):
         distance = abs(np.dot(a2 - a1, normal)) / normal_length
         if distance >= TOLERANCE:
             raise PlaneError(f"the four points are not on one plane (a'' is {distance:.4f} away)")
+        
+        
+@dataclass(frozen=True)
+class PlaneRow:
+    """One plane line of the CSV file: either a valid plane or the reason it is invalid."""
+    line: int                    # line number in the CSV file, starting at 1 (SRS decision 9)
+    plane: Optional[Plane]
+    error: Optional[str]
+
+    @property
+    def is_valid(self) -> bool:
+        return self.plane is not None
+
+
+def plane_from_values(values: Sequence[float]) -> Plane:
+    """Build a Triangle (9 values) or a Trapezoid (12 values) and validate it."""
+    points = [values[i:i + 3] for i in range(0, len(values), 3)]
+    if len(points) == 3:
+        plane = Triangle(*points)
+    elif len(points) == 4:
+        plane = Trapezoid(*points)
+    else:
+        raise PlaneError(f"expected 9 or 12 values, got {len(values)}")
+    plane.validate()
+    return plane
+
+
+def parse_row(fields: Sequence[str]) -> Plane:
+    """Turn the fields of one CSV line into a valid plane, or raise PlaneError."""
+    if len(fields) not in (9, 12):
+        raise PlaneError(f"expected 9 or 12 values, got {len(fields)}")
+    values = []
+    for field in fields:
+        try:
+            value = float(field)
+        except ValueError:
+            raise PlaneError(f"not a number: {field.strip()!r}") from None
+        if not math.isfinite(value):
+            raise PlaneError(f"not a finite number: {field.strip()!r}")
+        values.append(value)
+    return plane_from_values(values)
+
+
+def parse_planes(path) -> list:
+    """Read the planes of a CSV file (SRS decision 10).
+
+    Returns a PlaneRow for every line that is not empty and not a comment.
+    Raises PlaneFileError if the file cannot be read or contains no planes.
+    """
+    path = Path(path)
+    try:
+        with path.open(newline="", encoding="utf-8-sig") as f:
+            lines = list(csv.reader(f))
+    except (OSError, UnicodeDecodeError, csv.Error) as e:
+        raise PlaneFileError(f"cannot read the CSV file {path}: {e}") from None
+
+    rows = []
+    for number, fields in enumerate(lines, start=1):
+        if not fields or all(not field.strip() for field in fields):
+            continue                                    # empty line
+        if fields[0].lstrip().startswith("#"):
+            continue                                    # comment
+        try:
+            rows.append(PlaneRow(number, parse_row(fields), None))
+        except PlaneError as e:
+            rows.append(PlaneRow(number, None, str(e)))
+
+    if not rows:
+        raise PlaneFileError(f"the CSV file {path} contains no planes")
+    return rows
