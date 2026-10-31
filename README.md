@@ -93,6 +93,21 @@ Projected 100 plane(s): average 3.02 ms per plane (331 fps)
 Wrote out.mp4: 100 frames of 258 x 314 (0.61 s)
 ```
 
+## Graphical interface (optional)
+
+```
+python gui.py
+```
+or, on Windows, double-click `run_gui.bat`.
+
+- Choose the volume, the CSV file and the output, then **Run**: a progress bar, the frames as they are made,
+  and afterwards a slider and **Play** to go over them; **Open video** opens the result.
+- **Explore a plane**: choose a volume and move the sliders (axis, position, tilt, top edge).
+  The projection is shown at once, as a triangle or, with a top edge above 0%, a trapezoid.
+  **Copy** gives the plane as a CSV line.
+
+The window runs exactly the same code as `Ex0.py` (`src/projection/pipeline.py`).
+
 Ready-made plane files: `experiments/planes/` (100 planes per course volume) and `tests/data/`
 (valid, invalid and edge cases).
 
@@ -142,7 +157,9 @@ To repeat the experiment: `python experiments/run_experiment.py`
 
 ```
 Ex0.py                  demo entry point (the command of the assignment)
-src/projection/         source code: nrrd_reader, plane, projector, video_writer, errors
+gui.py, run_gui.bat     optional window
+src/projection/         source code: nrrd_reader, plane, projector, video_writer, errors,
+                        pipeline (shared by Ex0.py and gui.py), preview (GUI helpers)
 tests/                  unit, integration and demo tests (pytest), test CSV files in tests/data/
 experiments/            experiment script, plane files and raw results
 docs/                   SRS, algorithm, design, testing, experiment, media (videos and images)
