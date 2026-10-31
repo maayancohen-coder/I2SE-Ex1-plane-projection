@@ -68,10 +68,11 @@ Small volumes where the right answer is known in advance (`test_projector.py`):
 ### 3. Reference vs optimised implementation
 The projector has two implementations:
 - a **reference** implementation with plain loops, a direct translation of [ALGORITHM.md](ALGORITHM.md);
-- an **optimised** implementation with numpy, for performance (NFR-1).
+- an **optimised** implementation with numpy and parallel threads, for performance (NFR-1).
 
 The reference is checked by the tests above. The optimised implementation must return **exactly the same image** as the reference for:
 - 200 random valid planes (triangles and trapezoids, decimal coordinates, partly outside) on a random 16-bit volume;
+- 60 random planes with the split into 2, 3 and 8 threads forced even for small planes, so the parallel code is always tested;
 - 30 random planes on MRHead (`slow`);
 - 20 random planes on every file of the data tests (level 7).
 

@@ -52,7 +52,7 @@ all frames --VideoWriter--> file.mp4
 | `round_half_up(v)`, `sample(volume, p)` | The helpers of the algorithm [D1, D2]. |
 | `Projector` (abstract) | Interface: `project(volume, plane) -> E`. |
 | `ReferenceProjector` | A direct translation of [ALGORITHM.md](ALGORITHM.md) with plain loops. Simple, slow, used as the reference in tests. |
-| `FastProjector` | The same algorithm, computed for all pixels at once with numpy (NFR-1). Must return exactly the same `E` as the reference. |
+| `FastProjector` | The same algorithm, computed for many pixels at once with numpy (NFR-1): only the samples the algorithm takes, and large planes split into groups of rows that run in parallel threads (each group writes its own rows of `E`). Must return exactly the same `E` as the reference. |
 
 ### `video_writer.py`
 | Name | Responsibility |

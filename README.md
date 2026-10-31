@@ -131,12 +131,13 @@ From [docs/EXPERIMENT.md](docs/EXPERIMENT.md) (Windows 11 laptop, 100 planes per
 
 | Volume | Size | Projection speed | Nearest vs trilinear (mean diff, 0-255) |
 |--------|------|------------------|-----------------------------------------|
-| MRHead | 256 x 256 x 130 | 507 fps | 3.10 |
-| croissant | 500 x 500 x 500 | 52 fps | 2.35 |
-| onion | 256 x 256 x 130 | 564 fps | 2.58 |
+| MRHead | 256 x 256 x 130 | 649 fps | 3.10 |
+| croissant | 500 x 500 x 500 | 161 fps | 2.35 |
+| onion | 256 x 256 x 130 | 662 fps | 2.58 |
 
-- The numpy version is 18–46 times faster than the plain loop version and gives exactly the same images.
-- Nearest voxel looks almost the same as trilinear interpolation and is 2.5–4 times faster.
+- At least 100 fps on the 500³ volume, as the assignment expects (161 fps; the minimum is 30).
+- The numpy version (with parallel threads) is 46–65 times faster than the plain loop version and gives exactly the same images.
+- Nearest voxel looks almost the same as trilinear interpolation and is 3–9 times faster.
 - Demo videos: [MRHead](docs/media/MRHead.mp4) · [onion](docs/media/onion.mp4) ·
   [croissant](docs/media/croissant.mp4) · [swiss_roll](docs/media/swiss_roll.mp4) ·
   [biscuit_cake](docs/media/biscuit_cake.mp4)
