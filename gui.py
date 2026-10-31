@@ -22,7 +22,12 @@ from PIL import ImageTk                                             # noqa: E402
 
 from projection import pipeline                                     # noqa: E402
 from projection.errors import ProjectionError                       # noqa: E402
-from projection.preview import PREVIEW_BOX, default_output, to_preview   # noqa: E402
+from projection.nrrd_reader import read_nrrd                        # noqa: E402
+from projection.errors import PlaneError                            # noqa: E402
+from projection.preview import (MAX_TILT, PREVIEW_BOX, csv_line, default_output,   # noqa: E402
+                                explore_plane, to_preview)
+from projection.projector import FastProjector                      # noqa: E402
+from projection.video_writer import Normalizer                      # noqa: E402
 
 POLL_MS = 30            # how often the window reads messages from the worker thread
 PLAY_MS = 100           # 10 frames per second, like the video
@@ -39,6 +44,8 @@ class ProjectionApp:
         self.photo = None               # keeps the shown image alive (tkinter would drop it)
         self.playing = False
         self.auto_output = True         # the output name follows the volume until the user picks one
+        self.loaded = None              # (path, volume, normalizer) of the volume being explored
+        self.explore_pending = False    # an explore projection is already scheduled
 
         root.title("Plane Projection")
         root.minsize(820, 560)
@@ -92,10 +99,53 @@ class ProjectionApp:
         self.frame_label = ttk.Label(controls, text="", width=9)
         self.frame_label.pack(side="left")
 
-        self.log = ScrolledText(body, height=10, wrap="word", state="disabled", font=("Consolas", 9))
-        self.log.pack(side="left", fill="both", expand=True, padx=(10, 0))
+        right = ttk.Frame(body)
+        right.pack(side="left", fill="both", expand=True, padx=(10, 0))
+        self._build_explore(right)
+        self.log = ScrolledText(right, height=10, wrap="word", state="disabled", font=("Consolas", 9))
+        self.log.pack(fill="both", expand=True, pady=(8, 0))
         self.log.tag_config("warning", foreground="#b36b00")
         self.log.tag_config("error", foreground="#c62828")
+
+    def _build_explore(self, parent):
+        """Sliders that build one plane and show its projection at once (no CSV file needed)."""
+        box = ttk.LabelFrame(parent, text="Explore a plane", padding=8)
+        box.pack(fill="x")
+        self.axis = tk.StringVar(value="z")
+        self.position = tk.DoubleVar(value=50)
+        self.tilt = tk.DoubleVar(value=0)
+        self.top = tk.DoubleVar(value=0)
+
+        ttk.Label(box, text="Cut across:").grid(row=0, column=0, sticky="w")
+        axes = ttk.Frame(box)
+        axes.grid(row=0, column=1, sticky="w")
+        for name in ("x", "y", "z"):
+            ttk.Radiobutton(axes, text=name, value=name, variable=self.axis,
+                            command=self._schedule_explore).pack(side="left", padx=(0, 8))
+
+        ttk.Label(box, text="Position:").grid(row=1, column=0, sticky="w")
+        ttk.Scale(box, from_=0, to=100, variable=self.position,
+                  command=lambda _: self._schedule_explore()).grid(row=1, column=1, sticky="ew", pady=2)
+        self.position_label = ttk.Label(box, text="50%", width=6)
+        self.position_label.grid(row=1, column=2)
+
+        ttk.Label(box, text="Tilt:").grid(row=2, column=0, sticky="w")
+        ttk.Scale(box, from_=-MAX_TILT, to=MAX_TILT, variable=self.tilt,
+                  command=lambda _: self._schedule_explore()).grid(row=2, column=1, sticky="ew", pady=2)
+        self.tilt_label = ttk.Label(box, text="0°", width=6)
+        self.tilt_label.grid(row=2, column=2)
+
+        ttk.Label(box, text="Top edge:").grid(row=3, column=0, sticky="w")
+        ttk.Scale(box, from_=0, to=100, variable=self.top,
+                  command=lambda _: self._schedule_explore()).grid(row=3, column=1, sticky="ew", pady=2)
+        self.top_label = ttk.Label(box, text="triangle", width=9)
+        self.top_label.grid(row=3, column=2)
+
+        ttk.Label(box, text="Plane:").grid(row=4, column=0, sticky="w")
+        self.plane_text = tk.StringVar()
+        ttk.Entry(box, textvariable=self.plane_text, state="readonly").grid(row=4, column=1, sticky="ew", pady=2)
+        ttk.Button(box, text="Copy", width=6, command=self._copy_plane).grid(row=4, column=2)
+        box.columnconfigure(1, weight=1)
 
     # ---------- choosing files ----------
 
@@ -104,6 +154,7 @@ class ProjectionApp:
                                           filetypes=[("NRRD volume", "*.nrrd"), ("All files", "*.*")])
         if path:
             self.nrrd.set(str(Path(path)))                          # Windows style \ on Windows
+            self._schedule_explore()                                # show the middle slice at once
             if self.auto_output or not self.mp4.get():
                 self.mp4.set(default_output(path))
 
@@ -193,11 +244,69 @@ class ProjectionApp:
         self.run_button.config(state="normal")
         messagebox.showerror("Plane Projection", error)
 
+    # ---------- explore ----------
+
+    def _schedule_explore(self):
+        """Slider events come very often: draw at most once per 15 ms."""
+        if not self.explore_pending:
+            self.explore_pending = True
+            self.root.after(15, self._explore)
+
+    def _explore(self):
+        self.explore_pending = False
+        position, tilt, top = self.position.get(), round(self.tilt.get()), round(self.top.get())
+        self.position_label.config(text=f"{position:.0f}%")
+        self.tilt_label.config(text=f"{tilt}°")
+        self.top_label.config(text="triangle" if top == 0 else f"{top}%")
+        loaded = self._load_volume()
+        if loaded is None:
+            return
+        volume, normalizer = loaded
+        try:
+            plane = explore_plane(volume.shape, self.axis.get(), position / 100, tilt, top / 100)
+        except PlaneError as e:
+            self.status.config(text=f"Invalid plane: {e}")
+            return
+        self._stop_play()
+        image = normalizer.to_uint8(FastProjector().project(volume, plane))
+        self._show_image(to_preview(image))
+        self.plane_text.set(csv_line(plane))
+        self.frame_label.config(text="explore")
+
+    def _load_volume(self):
+        """The volume of the NRRD field, read once and kept while the path stays the same."""
+        path = self.nrrd.get().strip()
+        if not path:
+            self.status.config(text="Choose a volume first")
+            return None
+        if self.loaded is None or self.loaded[0] != path:
+            self.status.config(text="Loading the volume...")
+            self.root.update_idletasks()
+            try:
+                volume = read_nrrd(path)
+            except ProjectionError as e:
+                self._write_log(f"Error: {e}")
+                self.status.config(text="Cannot read the volume")
+                self.loaded = None
+                return None
+            self.loaded = (path, volume, Normalizer(volume))
+            sx, sy, sz = volume.shape
+            self.status.config(text=f"Exploring {Path(path).name} ({sx} x {sy} x {sz})")
+        return self.loaded[1], self.loaded[2]
+
+    def _copy_plane(self):
+        self.root.clipboard_clear()
+        self.root.clipboard_append(self.plane_text.get())
+        self.status.config(text="Plane copied: paste it as a line in a CSV file")
+
     # ---------- preview ----------
 
-    def _show(self, index):
-        self.photo = ImageTk.PhotoImage(self.previews[index])
+    def _show_image(self, image):
+        self.photo = ImageTk.PhotoImage(image)
         self.image_label.config(image=self.photo)
+
+    def _show(self, index):
+        self._show_image(self.previews[index])
         self.frame_label.config(text=f"{index + 1} / {len(self.previews)}")
         if str(self.slider.cget("state")) == "normal":
             self.slider.set(index)
