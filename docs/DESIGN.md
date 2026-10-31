@@ -13,8 +13,8 @@ Requirements are in the [SRS](SRS.md), the algorithm in [ALGORITHM.md](ALGORITHM
      |                      |                      |                        |
 nrrd_reader.py          plane.py             projector.py           video_writer.py
   read_nrrd()             Plane (abstract)     Projector (abstract)   Normalizer
-    -> Volume               Triangle             ReferenceProjector   VideoWriter
-                            Trapezoid            FastProjector
+    -> Volume               Triangle             ReferenceProjector   ErrorFrame
+                            Trapezoid            FastProjector        VideoWriter
                           parse_planes()
 ```
 
@@ -24,7 +24,7 @@ Data flow for one run:
 file.nrrd --read_nrrd--> Volume
 file.csv  --parse_planes--> [(line number, Plane or error), ...]
 for every plane:   Projector.project(Volume, Plane) --> E  --Normalizer--> 8-bit frame
-                   (invalid row or plane --> black frame + warning)
+                   (invalid row or plane --> ErrorFrame + warning)
 all frames --VideoWriter--> file.mp4
 ```
 
@@ -56,20 +56,41 @@ all frames --VideoWriter--> file.mp4
 | Name | Responsibility |
 |------|----------------|
 | `Normalizer` | Built once from the whole volume; maps values to `0..255` with percentiles and the fallback [D8]. |
+| `ErrorFrame` | The frame of an invalid CSV row: black, with a red X, the line number and the reason (Q&A 3b). It is drawn at the final frame size when the video is written (with Pillow). |
 | `VideoWriter` | Pads every frame to one even size, centred on black [D11], and writes the mp4 at 10 fps (FR-10). Uses `imageio` with `imageio-ffmpeg`, which brings its own ffmpeg for Windows, macOS and Linux (NFR-6). |
 
 ### `Ex0.py`
 Checks the arguments (FR-1), connects the modules, turns every error into a clear message without a traceback (NFR-2), and prints the timing summary (FR-11).
 
-### Errors
+### `errors.py`
 All expected errors are exceptions of the program, so `Ex0.py` can catch them in one place:
 
 ```
-ProjectionError
- +-- VolumeError      (NRRD file problems)
- +-- PlaneFileError   (CSV file missing or without planes)
+ProjectionError        stops the run; Ex0.py prints "Error: ..." without a traceback
+ +-- VolumeError       NRRD file problems
+ +-- PlaneFileError    CSV file missing, unreadable or without planes
+ +-- OutputError       the video cannot be written
+
+PlaneError             (a ValueError) one invalid plane: raised by validate(),
+                       caught by parse_planes for that line only -> error frame [D9]
 ```
-An invalid row or an invalid plane is not an exception for the whole run: `parse_planes` reports it for that line only [D9].
+
+## Tests
+
+The tests mirror the modules (see [TESTING.md](TESTING.md)):
+
+```
+tests/
+  test_plane.py         -> plane.py
+  test_nrrd_reader.py   -> nrrd_reader.py
+  test_projector.py     -> projector.py      (every test on both projectors)
+  test_video_writer.py  -> video_writer.py
+  test_demo.py          -> Ex0.py, run as a separate process
+  test_user_data.py     -> the whole program on real files (pytest -m data --nrrd ...)
+  nrrd_files.py         helper: writes small valid and broken NRRD files
+  conftest.py           pytest options --nrrd and --csv
+  data/*.csv            planes for the tests
+```
 
 ## Design principles
 
