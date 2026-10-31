@@ -1,8 +1,10 @@
 # Dataset
 
 NRRD files are not committed (see `.gitignore`). Place them in this folder locally.
-The course files (biscuit_cake, onion, croissant, swiss_roll) are available here: [course dataset](https://1drv.ms/f/c/c735514f37d70398/IgAEKwMnF60VQ5PbFmCLCiuQAVAnr5XcB54ssGT9yccdzog?e=T5XGS8).
-MRHead is available from the 3D Slicer sample data.
+All five files (MRHead, biscuit_cake, onion, croissant, swiss_roll) can be downloaded from one place,
+without signing in: [course dataset](https://1drv.ms/f/c/c735514f37d70398/IgAEKwMnF60VQ5PbFmCLCiuQAVAnr5XcB54ssGT9yccdzog?e=T5XGS8).
+Download them into this folder (`data/`); the experiment and the `slow` and `data` tests look for them here.
+MRHead is originally from the 3D Slicer sample data.
 
 | File | Size (voxels) | Type | Spacing | Source | Why |
 |------|---------------|------|---------|--------|-----|
