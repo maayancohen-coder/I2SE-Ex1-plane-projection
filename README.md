@@ -53,7 +53,8 @@ In scope:
   an invalid row or plane becomes an error frame (black, red X, line number and reason) and a warning.
 
 Out of scope:
-- A graphical user interface (command line only).
+- A graphical user interface as the main way to run the program: the assignment's interface is the command line.
+  An optional window (`gui.py`) was added on top of the same code, see [Graphical interface](#graphical-interface-optional).
 - 3D rendering or display of the volume (use 3D Slicer for that).
 - File formats other than NRRD (e.g. DICOM, NIfTI).
 - Editing or writing volumes: the input file is read only.

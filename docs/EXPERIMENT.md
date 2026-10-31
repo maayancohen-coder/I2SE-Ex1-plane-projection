@@ -55,7 +55,7 @@ The output of `Ex0.py` on the 100 sweep planes of each volume (10 seconds at 10 
 
 ## Conclusions
 
-1. **NFR-1 is met on every volume.** The slowest case is croissant (500³) at 52 fps, still above 30. On the 256x256x130 volumes the projection runs at about 300–560 fps.
+1. **NFR-1 is met on every volume.** The slowest case is croissant (500³) at 52 fps, still above the required 30. The target of 100 fps on croissant is reached in some runs (about 119 fps in the data tests) but not in this one, so we report it as partly met. On the 256x256x130 volumes the projection runs at about 300–560 fps.
 2. **Vectorising was necessary.** The loop version reaches only about 12.5 fps on the small volumes and 2.9 fps on croissant, so it would fail NFR-1. The numpy version computes the same image (checked bit for bit in the tests, [TESTING.md](TESTING.md) level 3) 18–46 times faster.
 3. **The cost depends mainly on the size of the plane.** Each pixel of E is one sample. Croissant's planes have about 4–5 times more pixels than those of the 256 volumes, and the fps drops 6–10 times. The rest of the difference is probably memory access: croissant is 125 MB, so the samples rarely hit the CPU cache.
 4. **Nearest voxel is a good choice (SRS decision 1).** The trilinear images differ by only 1.8–3.1 grey levels out of 255 on average (PSNR 31–35 dB). In the side-by-side images the anatomy and the structures look the same. Nearest voxel is also 2.5–4 times faster and never creates values that are not in the volume.

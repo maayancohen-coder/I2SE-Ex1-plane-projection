@@ -22,6 +22,8 @@ Decisions are referred to as [D1] .. [D11] (SRS section 5).
 | `test_projector.py` | `projector.py` |
 | `test_video_writer.py` | `video_writer.py` |
 | `test_demo.py` | `Ex0.py`, run as a separate process |
+| `test_pipeline.py` | `pipeline.py`: the messages and the frame callback shared by `Ex0.py` and the GUI |
+| `test_preview.py` | `preview.py`: the GUI helpers, including the planes of the explore sliders |
 | `test_user_data.py` | the whole program on real NRRD files (level 7) |
 | `nrrd_files.py` | helper: writes small valid and broken NRRD files for the tests |
 | `conftest.py` | pytest configuration: the options `--nrrd` and `--csv` |
@@ -104,6 +106,23 @@ For every NRRD file:
 - performance on 50 planes that cross the volume (fps printed, at least 30);
 - `Ex0.py` writes a video with one frame per plane, with the given CSV file or with 20 planes generated for the size of the volume.
 
+### 8. The optional GUI (`gui.py`)
+The window itself is not tested automatically; everything it computes is in `pipeline.py` and `preview.py`, which are:
+- `test_pipeline.py`: every message reaches the log, the frame callback is called once per frame in order, file errors are raised.
+- `test_preview.py`: the preview keeps the proportions; every plane from the explore sliders is valid for every axis,
+  tilt and top edge (triangles and trapezoids); a flat rectangle equals the slice of the volume pixel by pixel;
+  a plane copied as a CSV line is read back unchanged.
+
+Manual check (with `data/MRHead.nrrd`):
+
+| Action | Expected |
+|--------|----------|
+| Run with `experiments/planes/MRHead.csv` | progress bar, frames shown while they are made, slider and Play afterwards, Open video plays the mp4 |
+| Run with `tests/data/invalid_rows.csv` / `invalid_planes.csv` | warnings in the log with the line numbers; error frames with a red X in the preview and in the video |
+| Run with `tests/data/no_planes.csv`, a missing file, a non-NRRD file or an output folder that does not exist | an error message box, no video |
+| Explore: move position, tilt, axis and top edge | the projection follows the sliders; the Plane line has 9 values for a triangle and 12 for a trapezoid |
+| Copy a plane, paste it into a CSV file, Run | the same image as in the explore view |
+
 ## Test data
 | Data | Where | Used by |
 |------|-------|---------|
@@ -139,6 +158,7 @@ CSV files in `tests/data/`:
 | NFR-4 | each module has its own test file |
 | NFR-5 | this table |
 | NFR-6 | GitHub Actions on Windows, macOS and Linux |
+| GUI (optional) | pipeline and preview tests; the manual check in level 8 |
 
 ## How to run
 ```
