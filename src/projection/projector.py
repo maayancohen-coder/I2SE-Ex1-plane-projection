@@ -3,7 +3,9 @@
 See docs/ALGORITHM.md. Decisions of the SRS are referred to as [D1] .. [D11].
 """
 import math
+import os
 from abc import ABC, abstractmethod
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 
 import numpy as np
@@ -94,11 +96,24 @@ class ReferenceProjector(Projector):
 
 
 class FastProjector(Projector):
-    """The same algorithm, computed for all pixels at once with numpy (NFR-1).
+    """The same algorithm, computed for many pixels at once with numpy (NFR-1).
 
+    Two speed-ups, both without changing the result:
+    - only the samples that the algorithm really takes are computed (count[y] per row), not a
+      full rectangle of height x longest row, which is about half the work for a triangle;
+    - large planes are split into groups of rows that run in parallel threads. numpy releases
+      Python's lock (GIL) during its array operations, so the threads use several CPU cores.
+      The groups write to different rows of E, so they never touch the same pixel.
     Every arithmetic step is written in the same order as in ReferenceProjector,
     so both return exactly the same image.
     """
+
+    MIN_SAMPLES_PER_THREAD = 50_000     # smaller planes are faster in one thread
+
+    def __init__(self, threads: int = None, min_samples: int = MIN_SAMPLES_PER_THREAD):
+        self.threads = threads or min(os.cpu_count() or 1, 8)
+        self.min_samples = min_samples
+        self._pool = None
 
     def project(self, volume: Volume, plane: Plane) -> np.ndarray:
         m = volume.data
@@ -114,23 +129,42 @@ class FastProjector(Projector):
         single = d12 < EPSILON                                  # single-point rows [D5]
         d12 = np.where(single, 0.0, d12)
         dp = np.where(single[:, None], 0.0, d / np.where(single, 1.0, d12)[:, None])
-
         count = np.floor(d12).astype(np.int64) + 1              # samples per row
-        x1 = np.arange(count.max(), dtype=float)[None, :]
-        used = x1 < count[:, None]                              # rows have different lengths
 
-        # p = a1 + x1 * dp for every row and every step, one coordinate at a time
-        i = np.floor(a1[:, 0:1] + x1 * dp[:, 0:1] + 0.5).astype(np.int64)
-        j = np.floor(a1[:, 1:2] + x1 * dp[:, 1:2] + 0.5).astype(np.int64)
-        k = np.floor(a1[:, 2:3] + x1 * dp[:, 2:3] + 0.5).astype(np.int64)
-        x = np.floor(lay.dbc / 2 - d12[:, None] / 2 + x1 + 0.5).astype(np.int64)
+        groups = min(self.threads, max(1, int(count.sum()) // self.min_samples))
+        if groups == 1:
+            self._rows(m, lay, e, a1, dp, d12, count, 0, lay.height)
+            return e
+        # split the rows into groups with about the same number of samples
+        cuts = np.searchsorted(np.cumsum(count), np.linspace(0, count.sum(), groups + 1)[1:-1])
+        bounds = [0, *cuts.tolist(), lay.height]
+        if self._pool is None:
+            self._pool = ThreadPoolExecutor(self.threads)
+        jobs = [self._pool.submit(self._rows, m, lay, e, a1, dp, d12, count, r0, r1)
+                for r0, r1 in zip(bounds[:-1], bounds[1:])]
+        for job in jobs:
+            job.result()                                        # also passes on any error
+        return e
+
+    @staticmethod
+    def _rows(m, lay, e, a1, dp, d12, count, r0, r1):
+        """Fill the rows r0 .. r1-1 of E."""
+        if r1 <= r0:
+            return
+        n = count[r0:r1]
+        r = np.repeat(np.arange(r0, r1), n)                     # the row of every sample
+        x1 = (np.arange(r.size) - np.repeat(np.cumsum(n) - n, n)).astype(float)   # 0 .. count-1 in each row
+
+        # p = a1 + x1 * dp for every sample, one coordinate at a time
+        i = np.floor(a1[r, 0] + x1 * dp[r, 0] + 0.5).astype(np.int64)
+        j = np.floor(a1[r, 1] + x1 * dp[r, 1] + 0.5).astype(np.int64)
+        k = np.floor(a1[r, 2] + x1 * dp[r, 2] + 0.5).astype(np.int64)
+        x = np.floor(lay.dbc / 2 - d12[r] / 2 + x1 + 0.5).astype(np.int64)
 
         sx, sy, sz = m.shape
-        inside = used & (i >= 0) & (i < sx) & (j >= 0) & (j < sy) & (k >= 0) & (k < sz)
-        write = used & (x >= 0) & (x < lay.width)
+        inside = (i >= 0) & (i < sx) & (j >= 0) & (j < sy) & (k >= 0) & (k < sz)
+        write = (x >= 0) & (x < lay.width)
 
-        values = np.zeros(i.shape, dtype=m.dtype)
+        values = np.zeros(r.size, dtype=m.dtype)
         values[inside] = m[i[inside], j[inside], k[inside]]    # nearest voxel, 0 outside M [D1]
-        rows = np.broadcast_to(np.arange(lay.height)[:, None], i.shape)
-        e[rows[write], x[write]] = values[write]
-        return e
+        e[r[write], x[write]] = values[write]

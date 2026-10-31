@@ -144,6 +144,16 @@ def test_fast_equals_reference_on_random_planes():
         assert np.array_equal(FastProjector().project(volume, plane), ReferenceProjector().project(volume, plane))
 
 
+@pytest.mark.parametrize("threads", [2, 3, 8])
+def test_fast_in_parallel_threads_equals_reference(threads):
+    """Force the split into groups of rows, even for small planes (min_samples=1)."""
+    rng = np.random.default_rng(11)
+    volume = Volume(rng.integers(0, 255, (35, 35, 35)).astype(np.uint8))
+    fast = FastProjector(threads=threads, min_samples=1)
+    for plane in random_planes(rng, 60, size=35):
+        assert np.array_equal(fast.project(volume, plane), ReferenceProjector().project(volume, plane))
+
+
 @pytest.mark.slow
 def test_fast_equals_reference_on_mrhead():
     path = DATASET / "MRHead.nrrd"
