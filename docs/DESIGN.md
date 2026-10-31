@@ -6,8 +6,10 @@ Requirements are in the [SRS](SRS.md), the algorithm in [ALGORITHM.md](ALGORITHM
 ## Overview
 
 ```
-                         Ex0.py  (main)
-     reads the input, runs the projection for every plane, writes the video, prints the timing
+          Ex0.py (command line)                 gui.py (window)
+                     \                              /
+                      +---- pipeline.run() -------+
+     reads the input, runs the projection for every plane, writes the video, reports the timing
                             |
      +----------------------+----------------------+------------------------+
      |                      |                      |                        |
@@ -59,8 +61,27 @@ all frames --VideoWriter--> file.mp4
 | `ErrorFrame` | The frame of an invalid CSV row: black, with a red X, the line number and the reason (Q&A 3b). It is drawn at the final frame size when the video is written (with Pillow). |
 | `VideoWriter` | Pads every frame to one even size, centred on black [D11], and writes the mp4 at 10 fps (FR-10). Uses `imageio` with `imageio-ffmpeg`, which brings its own ffmpeg for Windows, macOS and Linux (NFR-6). |
 
+### `pipeline.py`
+| Name | Responsibility |
+|------|----------------|
+| `run(nrrd, csv, mp4, log=print, on_frame=None) -> Summary` | The whole program in one function: reads, projects every plane, writes the video and reports the timing (FR-11). `log` receives every message; `on_frame(index, total, frame)` is called after each frame. Both are callbacks, so the same code serves the command line and the window. |
+| `Summary` | What one run produced: frames, valid planes, average time, frame size. |
+
 ### `Ex0.py`
-Checks the arguments (FR-1), connects the modules, turns every error into a clear message without a traceback (NFR-2), and prints the timing summary (FR-11).
+The command line of the assignment. Checks the arguments (FR-1), calls `pipeline.run` with `log=print`, and turns every error into a clear message without a traceback (NFR-2).
+
+### `gui.py` and `preview.py`
+An optional window on top of the same code (not required by the assignment).
+
+| Name | Responsibility |
+|------|----------------|
+| `ProjectionApp` (`gui.py`) | The tkinter window: file choice, Run, progress bar, live preview, a slider and Play over the frames, the log, and "Explore a plane". |
+| `explore_plane(shape, axis, position, tilt, top)` (`preview.py`) | Builds a valid isosceles triangle (`top = 0`) or trapezoid across the volume from the explore sliders. |
+| `to_preview`, `csv_line`, `default_output` (`preview.py`) | Scale a frame for the preview, write a plane as a CSV line, suggest the output name. |
+
+`preview.py` has no tkinter code, so it is tested everywhere, including GitHub Actions.
+The projection runs in a worker thread; the worker never touches the window, it only puts messages in a
+`queue.Queue` that the window reads every 30 ms (tkinter is not thread safe). This is the producer-consumer pattern.
 
 ### `errors.py`
 All expected errors are exceptions of the program, so `Ex0.py` can catch them in one place:
@@ -86,6 +107,8 @@ tests/
   test_projector.py     -> projector.py      (every test on both projectors)
   test_video_writer.py  -> video_writer.py
   test_demo.py          -> Ex0.py, run as a separate process
+  test_pipeline.py      -> pipeline.py       (messages and frame callback)
+  test_preview.py       -> preview.py        (explore planes, preview images)
   test_user_data.py     -> the whole program on real files (pytest -m data --nrrd ...)
   nrrd_files.py         helper: writes small valid and broken NRRD files
   conftest.py           pytest options --nrrd and --csv
@@ -100,4 +123,5 @@ tests/
 | **Polymorphism** | The projector never asks "triangle or trapezoid?". It only uses `start1`, `start2`, `b`, `c`, so one algorithm serves both shapes, as the assignment says ("the same algorithm holds"). |
 | **Strategy** | `ReferenceProjector` and `FastProjector` implement the same interface and can replace each other. This makes it possible to test the fast one against the simple one. |
 | **Fail clearly** | File errors stop the run with a message; row errors only affect their own frame [D9]. |
+| **Separate the interface from the logic** | `Ex0.py` and `gui.py` only collect input and show output; both call `pipeline.run`. A new interface needs no change in the algorithm. |
 | **No hidden state** | `Volume` and the planes do not change after they are created, so the same objects can be used for many projections. |
