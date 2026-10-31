@@ -8,7 +8,6 @@ import sys
 import time
 from pathlib import Path
 
-import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
@@ -16,10 +15,9 @@ from projection.errors import ProjectionError                      # noqa: E402
 from projection.nrrd_reader import read_nrrd                       # noqa: E402
 from projection.plane import parse_planes                          # noqa: E402
 from projection.projector import FastProjector                     # noqa: E402
-from projection.video_writer import Normalizer, VideoWriter        # noqa: E402
+from projection.video_writer import ErrorFrame, Normalizer, VideoWriter   # noqa: E402
 
 USAGE = "Usage: python Ex0.py file.nrrd file.csv file.mp4"
-BLACK_FRAME = np.zeros((2, 2), dtype=np.uint8)   # padded to the full frame size by the writer
 
 
 def run(nrrd_path: str, csv_path: str, mp4_path: str) -> None:
@@ -36,8 +34,8 @@ def run(nrrd_path: str, csv_path: str, mp4_path: str) -> None:
     frames, projection_time, projected = [], 0.0, 0
     for row in rows:
         if not row.is_valid:                                         # SRS decision 9
-            print(f"Warning: {Path(csv_path).name} line {row.line}: {row.error} -> black frame")
-            frames.append(BLACK_FRAME)
+            print(f"Warning: {Path(csv_path).name} line {row.line}: {row.error} -> error frame")
+            frames.append(ErrorFrame(f"{Path(csv_path).name} line {row.line}", row.error))
             continue
         start = time.perf_counter()
         image = projector.project(volume, row.plane)
@@ -52,7 +50,7 @@ def run(nrrd_path: str, csv_path: str, mp4_path: str) -> None:
     # timing summary (FR-11)
     if projected:
         average = projection_time / projected
-        print(f"Projected {projected} planes: average {average * 1000:.2f} ms per plane ({1 / average:.0f} fps)")
+        print(f"Projected {projected} plane(s): average {average * 1000:.2f} ms per plane ({1 / average:.0f} fps)")
     else:
         print("Projected 0 planes: every row was invalid")
     print(f"Wrote {Path(mp4_path).name}: {len(frames)} frames of {width} x {height} ({write_time:.2f} s)")

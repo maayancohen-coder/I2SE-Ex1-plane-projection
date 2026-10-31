@@ -3,3 +3,4 @@ scipy
 pytest
 imageio
 imageio-ffmpeg
+pillow

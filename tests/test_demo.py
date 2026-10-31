@@ -77,13 +77,14 @@ def test_csv_without_planes(volume, tmp_path):
     assert not (tmp_path / "out.mp4").exists()
 
 
-def test_invalid_rows_give_warnings_and_black_frames(volume, tmp_path):
+def test_invalid_rows_give_warnings_and_error_frames(volume, tmp_path):
     out = tmp_path / "out.mp4"
     code, output = run_demo(volume, DATA / "invalid_rows.csv", out)
     assert code == 0, output
     warned = [line for line in output.splitlines() if line.startswith("Warning:")]
     assert [w.split("line ")[1].split(":")[0] for w in warned] == ["4", "8", "10", "12", "14", "16"]   # FR-5
     assert count_frames(out)[0] == 7                         # the valid row 6 keeps its place
+    assert "-> error frame" in output
 
 
 def test_invalid_planes_give_warnings(volume, tmp_path):
