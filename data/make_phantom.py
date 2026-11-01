@@ -93,6 +93,7 @@ def write_nrrd(path, volume, spacing=(1.0, 1.0, 1.0)):
 
 
 def main():
+    """Read the file name and size from the command line and write the phantom."""
     out_path = sys.argv[1] if len(sys.argv) > 1 else "phantom_knot.nrrd"
     n = int(sys.argv[2]) if len(sys.argv) > 2 else 200
     c = n / 2

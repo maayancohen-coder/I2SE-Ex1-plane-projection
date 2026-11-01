@@ -12,6 +12,7 @@ DATASET = Path(__file__).parent.parent / "data"
 
 
 def pytest_addoption(parser):
+    """Add the options --nrrd (can repeat) and --csv to pytest."""
     parser.addoption("--nrrd", action="append", default=[],
                      help="NRRD file for the data tests (can be repeated); default: every .nrrd file in data/")
     parser.addoption("--csv", default=None,

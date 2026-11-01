@@ -17,6 +17,7 @@ USAGE = "Usage: python Ex0.py file.nrrd file.csv file.mp4"
 
 
 def main(argv: list) -> int:
+    """Run the program with the command line arguments; return 0 on success, 1 on any error."""
     if len(argv) != 4:                                               # FR-1
         print(USAGE)
         return 1

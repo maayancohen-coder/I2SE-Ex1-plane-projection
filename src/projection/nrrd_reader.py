@@ -26,14 +26,17 @@ class Volume:
 
     @property
     def shape(self) -> tuple:
+        """(sx, sy, sz)"""
         return self.data.shape
 
     @property
     def dtype(self) -> np.dtype:
+        """The numpy value type, e.g. uint8."""
         return self.data.dtype
 
 
 def _parse_header(lines: list, path: Path) -> dict:
+    """Check the first line (NRRD000x) and turn the 'key: value' lines into a dict."""
     if not lines or not lines[0].startswith("NRRD000"):
         raise VolumeError(f"{path} is not an NRRD file")
     fields = {}

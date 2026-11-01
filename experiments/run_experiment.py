@@ -49,6 +49,7 @@ def sweep_planes(shape, n):
 
 
 def write_csv(path, planes):
+    """Save the planes as a CSV file (9 values per line)."""
     lines = [f"# {len(planes)} sweep planes made by experiments/run_experiment.py",
              "# ax,ay,az,bx,by,bz,cx,cy,cz"]
     for plane in planes:
@@ -65,6 +66,7 @@ class TrilinearProjector(Projector):
     """
 
     def project(self, volume, plane: Plane) -> np.ndarray:
+        """Return E like FastProjector, with trilinear values instead of the nearest voxel."""
         m = volume.data
         lay = Layout.of(plane)
         e = np.zeros((lay.height, lay.width), dtype=np.float64)
@@ -113,6 +115,7 @@ class TrilinearProjector(Projector):
 
 
 def fps(projector, volume, planes):
+    """Planes per second of a projector on these planes, after one warm-up plane."""
     projector.project(volume, planes[0])                     # warm-up
     start = time.perf_counter()
     for plane in planes:
@@ -135,6 +138,7 @@ def compare(volume, planes, normalizer):
 
 
 def side_by_side(volume, plane, normalizer, path):
+    """Save one image: nearest voxel on the left, trilinear on the right."""
     import imageio.v2 as imageio
     a = normalizer.to_uint8(FastProjector().project(volume, plane))
     b = normalizer.to_uint8(TrilinearProjector().project(volume, plane))
@@ -143,6 +147,7 @@ def side_by_side(volume, plane, normalizer, path):
 
 
 def run_demo(nrrd, csv, mp4):
+    """Run Ex0.py as the lecturer does and return the fps it printed."""
     result = subprocess.run([sys.executable, str(ROOT / "Ex0.py"), str(nrrd), str(csv), str(mp4)],
                             capture_output=True, text=True)
     print(result.stdout.rstrip())
@@ -151,6 +156,7 @@ def run_demo(nrrd, csv, mp4):
 
 
 def main(argv):
+    """Run the whole experiment on every NRRD file and save experiments/results.md."""
     data_dir = Path(argv[1]) if len(argv) > 1 else ROOT / "data"
     files = sorted(data_dir.glob("*.nrrd"))
     if not files:

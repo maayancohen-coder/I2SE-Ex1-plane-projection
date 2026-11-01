@@ -38,6 +38,7 @@ class ProjectionApp:
     it only puts messages in a queue that the window reads (tkinter is not thread safe)."""
 
     def __init__(self, root: tk.Tk):
+        """Create the window and its state."""
         self.root = root
         self.messages = queue.Queue()
         self.previews = []              # one small image per frame, for the slider
@@ -54,6 +55,7 @@ class ProjectionApp:
     # ---------- layout ----------
 
     def _build(self):
+        """Create all the widgets: file rows, buttons, preview, explore panel and log."""
         files = ttk.Frame(self.root, padding=10)
         files.pack(fill="x")
         self.nrrd = tk.StringVar()
@@ -150,6 +152,7 @@ class ProjectionApp:
     # ---------- choosing files ----------
 
     def _browse_nrrd(self):
+        """Choose the volume; suggest the output name and show its middle slice."""
         path = filedialog.askopenfilename(title="Volume", initialdir=ROOT / "data",
                                           filetypes=[("NRRD volume", "*.nrrd"), ("All files", "*.*")])
         if path:
@@ -159,12 +162,14 @@ class ProjectionApp:
                 self.mp4.set(default_output(path))
 
     def _browse_csv(self):
+        """Choose the planes file."""
         path = filedialog.askopenfilename(title="Planes", initialdir=ROOT / "experiments" / "planes",
                                           filetypes=[("CSV planes", "*.csv"), ("All files", "*.*")])
         if path:
             self.csv.set(str(Path(path)))
 
     def _browse_mp4(self):
+        """Choose where to save the video; from now on the name is kept."""
         path = filedialog.asksaveasfilename(title="Output video", defaultextension=".mp4",
                                             filetypes=[("MP4 video", "*.mp4")])
         if path:
@@ -174,6 +179,7 @@ class ProjectionApp:
     # ---------- running ----------
 
     def _run(self):
+        """Start a run in a worker thread and reset the window for it."""
         paths = [self.nrrd.get().strip(), self.csv.get().strip(), self.mp4.get().strip()]
         if not all(paths):
             messagebox.showwarning("Plane Projection", "Please choose a volume, a CSV file and an output file.")
@@ -193,6 +199,7 @@ class ProjectionApp:
     def _work(self, nrrd, csv, mp4):
         """Runs in the worker thread: only puts messages in the queue."""
         def on_frame(index, total, frame):
+            """Called by the pipeline after each frame: send a small preview to the window."""
             self.messages.put(("frame", index, total, to_preview(frame)))
         try:
             summary = pipeline.run(nrrd, csv, mp4, log=lambda m: self.messages.put(("log", m)), on_frame=on_frame)
@@ -230,6 +237,7 @@ class ProjectionApp:
         self.root.after(POLL_MS, self._poll)
 
     def _finished(self, summary):
+        """The run ended well: enable the slider, Play and Open video."""
         self.status.config(text=f"Done: {summary.frames} frames")
         self.run_button.config(state="normal")
         self.open_button.config(state="normal")
@@ -239,6 +247,7 @@ class ProjectionApp:
             self._show(0)
 
     def _failed(self, error):
+        """The run stopped with an error: show it in the log and in a message box."""
         self._write_log(f"Error: {error}")
         self.status.config(text="Failed")
         self.run_button.config(state="normal")
@@ -253,6 +262,7 @@ class ProjectionApp:
             self.root.after(15, self._explore)
 
     def _explore(self):
+        """Build the plane from the sliders, project it and show it."""
         self.explore_pending = False
         position, tilt, top = self.position.get(), round(self.tilt.get()), round(self.top.get())
         self.position_label.config(text=f"{position:.0f}%")
@@ -295,6 +305,7 @@ class ProjectionApp:
         return self.loaded[1], self.loaded[2]
 
     def _copy_plane(self):
+        """Copy the current explore plane as a CSV line."""
         self.root.clipboard_clear()
         self.root.clipboard_append(self.plane_text.get())
         self.status.config(text="Plane copied: paste it as a line in a CSV file")
@@ -302,22 +313,26 @@ class ProjectionApp:
     # ---------- preview ----------
 
     def _show_image(self, image):
+        """Show a Pillow image in the preview area."""
         self.photo = ImageTk.PhotoImage(image)
         self.image_label.config(image=self.photo)
 
     def _show(self, index):
+        """Show the frame with this index and move the slider to it."""
         self._show_image(self.previews[index])
         self.frame_label.config(text=f"{index + 1} / {len(self.previews)}")
         if str(self.slider.cget("state")) == "normal":
             self.slider.set(index)
 
     def _on_slider(self, value):
+        """The frame slider moved: show that frame."""
         if self.previews and str(self.slider.cget("state")) == "normal":
             index = round(float(value))
             if self.frame_label.cget("text") != f"{index + 1} / {len(self.previews)}":
                 self._show(index)
 
     def _toggle_play(self):
+        """Start or pause playing the frames."""
         if self.playing:
             self._stop_play()
         else:
@@ -326,6 +341,7 @@ class ProjectionApp:
             self._play_step(round(float(self.slider.get())))
 
     def _play_step(self, index):
+        """Show one frame and schedule the next one (10 per second)."""
         if not self.playing:
             return
         if index >= len(self.previews):
@@ -334,12 +350,14 @@ class ProjectionApp:
         self.root.after(PLAY_MS, self._play_step, index + 1)
 
     def _stop_play(self):
+        """Stop playing."""
         self.playing = False
         self.play_button.config(text="Play")
 
     # ---------- log and video ----------
 
     def _write_log(self, text):
+        """Add a line to the log; warnings and errors get their own colour."""
         tag = "warning" if text.startswith("Warning") else "error" if text.startswith("Error") else ""
         self.log.config(state="normal")
         self.log.insert("end", text + "\n", tag)
@@ -347,11 +365,13 @@ class ProjectionApp:
         self.log.config(state="disabled")
 
     def _clear_log(self):
+        """Empty the log."""
         self.log.config(state="normal")
         self.log.delete("1.0", "end")
         self.log.config(state="disabled")
 
     def _open_video(self):
+        """Open the video in the default player of the computer."""
         path = self.mp4.get()
         if sys.platform.startswith("win"):
             os.startfile(path)                                      # the default video player
@@ -362,6 +382,7 @@ class ProjectionApp:
 
 
 def main():
+    """Open the window."""
     root = tk.Tk()
     ProjectionApp(root)
     root.mainloop()

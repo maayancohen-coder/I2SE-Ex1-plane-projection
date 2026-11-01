@@ -18,6 +18,7 @@ class Normalizer:
     """Maps the values of one volume to 0..255 with one mapping for all frames (SRS decision 8)."""
 
     def __init__(self, volume: Volume):
+        """Compute the mapping once, from the whole volume."""
         data = volume.data
         self._identity = data.dtype == np.uint8         # uint8 volumes are used as is
         self._lo = self._hi = 0.0
@@ -34,6 +35,7 @@ class Normalizer:
         return self._lo, self._hi
 
     def to_uint8(self, image: np.ndarray) -> np.ndarray:
+        """Map an image E to 8 bit with the mapping of this volume."""
         if self._identity:
             return image.astype(np.uint8, copy=False)
         if self._hi == self._lo:                        # a constant volume: nothing to show
@@ -101,6 +103,7 @@ class VideoWriter:
     """Writes 8-bit grey frames and error frames as an mp4 video: one size for all frames, 10 fps (FR-10)."""
 
     def __init__(self, fps: int = FPS):
+        """fps: playback rate of the video."""
         self.fps = fps
 
     def write(self, path, frames: list) -> tuple:

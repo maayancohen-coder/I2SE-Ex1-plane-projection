@@ -52,6 +52,7 @@ def explore_plane(shape, axis: str = "z", position: float = 0.5, tilt: float = 0
     half = math.tan(math.radians(tilt)) * (sv - 1) / 2      # the apex goes up, the base goes down
 
     def point(pu, pv, pw):
+        """Put the (u, v, w) values on the right volume axes."""
         p = [0.0, 0.0, 0.0]
         p[u], p[v], p[w] = pu, pv, pw
         return tuple(p)

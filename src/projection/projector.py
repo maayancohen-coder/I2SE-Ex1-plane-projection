@@ -41,6 +41,7 @@ class Layout:
 
     @staticmethod
     def of(plane: Plane) -> "Layout":
+        """Compute the sizes and unit vectors of a plane."""
         dab = dist(plane.start1, plane.b)
         dbc = dist(plane.b, plane.c)
         return Layout(
@@ -69,6 +70,7 @@ class ReferenceProjector(Projector):
     """
 
     def project(self, volume: Volume, plane: Plane) -> np.ndarray:
+        """Project the plane with plain loops, step by step as in ALGORITHM.md."""
         m = volume.data
         lay = Layout.of(plane)
         e = np.zeros((lay.height, lay.width), dtype=m.dtype)
@@ -91,6 +93,7 @@ class ReferenceProjector(Projector):
 
     @staticmethod
     def _put(e: np.ndarray, y: int, x: int, value: int) -> None:
+        """Write one pixel, only if x is inside the row (a guard for rounding at the edges)."""
         if 0 <= x < e.shape[1]:
             e[y, x] = value
 
@@ -111,11 +114,13 @@ class FastProjector(Projector):
     MIN_SAMPLES_PER_THREAD = 50_000     # smaller planes are faster in one thread
 
     def __init__(self, threads: int = None, min_samples: int = MIN_SAMPLES_PER_THREAD):
+        """threads: how many may run at once (default: CPU cores, at most 8)."""
         self.threads = threads or min(os.cpu_count() or 1, 8)
         self.min_samples = min_samples
         self._pool = None
 
     def project(self, volume: Volume, plane: Plane) -> np.ndarray:
+        """Project the plane with numpy; large planes are split between threads."""
         m = volume.data
         lay = Layout.of(plane)
         e = np.zeros((lay.height, lay.width), dtype=m.dtype)

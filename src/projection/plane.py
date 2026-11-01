@@ -28,6 +28,7 @@ class Plane(ABC):
     """
 
     def __init__(self, start1, start2, b, c):
+        """Store the four points as float arrays."""
         self._start1 = np.array(start1, dtype=float)
         self._start2 = np.array(start2, dtype=float)
         self._b = np.array(b, dtype=float)
@@ -35,18 +36,22 @@ class Plane(ABC):
 
     @property
     def start1(self) -> np.ndarray:
+        """Start of the left leg (a, or a' in a trapezoid)."""
         return self._start1
 
     @property
     def start2(self) -> np.ndarray:
+        """Start of the right leg (a, or a'' in a trapezoid)."""
         return self._start2
 
     @property
     def b(self) -> np.ndarray:
+        """End of the left leg (left end of the base)."""
         return self._b
 
     @property
     def c(self) -> np.ndarray:
+        """End of the right leg (right end of the base)."""
         return self._c
 
     @abstractmethod
@@ -58,13 +63,16 @@ class Triangle(Plane):
     """Isosceles triangle a, b, c with |ab| = |ac|. Both legs start at the apex a."""
 
     def __init__(self, a, b, c):
+        """The apex a starts both legs."""
         super().__init__(a, a, b, c)
 
     @property
     def a(self) -> np.ndarray:
+        """The apex."""
         return self.start1
 
     def validate(self) -> None:
+        """Raise PlaneError unless |ab| = |ac| (within TOLERANCE) and the points span a triangle."""
         a, b, c = self.a, self.b, self.c
         leg_ab, leg_ac = dist(a, b), dist(a, c)
         if abs(leg_ab - leg_ac) >= TOLERANCE:
@@ -77,6 +85,7 @@ class Trapezoid(Plane):
     """Isosceles trapezoid a', a'', b, c with legs a'->b and a''->c (assignment Q&A)."""
 
     def validate(self) -> None:
+        """Raise PlaneError unless the legs are equal, |a'a''| <= |bc|, the points are not on one line, and all four are on one plane."""
         a1, a2, b, c = self.start1, self.start2, self.b, self.c
         leg1, leg2 = dist(a1, b), dist(a2, c)
         if abs(leg1 - leg2) >= TOLERANCE:
@@ -102,6 +111,7 @@ class PlaneRow:
 
     @property
     def is_valid(self) -> bool:
+        """True if the row became a valid plane."""
         return self.plane is not None
 
 
