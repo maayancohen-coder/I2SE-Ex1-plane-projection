@@ -24,14 +24,11 @@ python Ex0.py data/MRHead.nrrd experiments/planes/MRHead.csv out.mp4
 The NRRD files are not in the repository (see [Data](#data)); put them in `data/` first.
 Tested on Windows 11, and on Ubuntu, Windows and macOS with GitHub Actions, Python 3.10 or newer.
 
-## Explainer video
+![The optional window after a run on MRHead](docs/media/gui.png)
 
-A 65-second walkthrough of the algorithm on the MRHead volume: the triangle `a, b, c`,
-the unit vectors, the row-by-row sweep, the centring formula and why the triangle is isosceles.
-
-[![Explainer video](docs/media/explainer_preview.png)](docs/media/plane_projection_explainer.mp4)
-
-Click the image to open the video ([docs/media/plane_projection_explainer.mp4](docs/media/plane_projection_explainer.mp4)).
+*The optional window (`python gui.py`) after a run on `MRHead.nrrd` with its 100 experiment planes (564 fps):
+the preview shows frame 83 of the video; the "Explore a plane" sliders build a plane and project it at once.
+The command line of the assignment, `Ex0.py`, runs the same code. See [Graphical interface](#graphical-interface-optional).*
 
 ## Problem
 
