@@ -56,12 +56,15 @@ def test_invalid_triangle(points, reason):
     ([(70, 40, 100), (140, 40, 100), (20, 160, 100), (180, 160, 100)], "legs not equal"),
     ([(20, 40, 100), (180, 40, 100), (70, 160, 100), (130, 160, 100)], "top edge longer"),
     ([(70, 40, 100), (131.0102051, 40, 110), (20, 160, 100), (180, 160, 100)], "not on one plane"),
+    ([(40, 100, 100), (60, 100, 100), (0, 100, 100), (100, 100, 100)], "degenerate"),   # all four on one line
+    ([(100, 100, 100)] * 4, "degenerate"),                                              # identical points
 ])
 def test_invalid_trapezoid(points, reason):
     with pytest.raises(PlaneError, match=reason):
         Trapezoid(*points).validate()
-        
-        # ---------- CSV files ----------
+
+
+# ---------- CSV files ----------
 
 def test_all_valid_triangles_in_file():
     rows = parse_planes(DATA / "valid_triangles.csv")
