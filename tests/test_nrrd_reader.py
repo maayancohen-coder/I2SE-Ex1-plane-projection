@@ -1,3 +1,4 @@
+"""Unit tests of nrrd_reader.py: every supported type and encoding, and every file error."""
 import gzip
 
 import numpy as np

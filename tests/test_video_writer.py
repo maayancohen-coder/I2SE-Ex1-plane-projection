@@ -1,3 +1,4 @@
+"""Tests of video_writer.py: normalisation, frame size, padding, real mp4 files, error frames."""
 import numpy as np
 import pytest
 

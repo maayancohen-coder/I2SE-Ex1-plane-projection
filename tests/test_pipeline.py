@@ -14,6 +14,7 @@ DATA = Path(__file__).parent / "data"
 
 @pytest.fixture
 def volume(tmp_path):
+    """A 60^3 volume with a bright ball, written as an NRRD file."""
     x, y, z = np.indices((60, 60, 60))
     m = np.where((x - 30) ** 2 + (y - 30) ** 2 + (z - 30) ** 2 < 20 ** 2, 1000, 0).astype(np.uint16)
     return write_nrrd(tmp_path / "ball.nrrd", m)

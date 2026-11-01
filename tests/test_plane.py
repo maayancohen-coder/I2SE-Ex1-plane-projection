@@ -1,3 +1,4 @@
+"""Unit tests of plane.py: valid and invalid triangles and trapezoids, and reading CSV files."""
 from pathlib import Path
 
 import pytest

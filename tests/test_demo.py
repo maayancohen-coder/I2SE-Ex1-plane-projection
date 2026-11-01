@@ -13,6 +13,7 @@ DATA = Path(__file__).parent / "data"
 
 
 def run_demo(*args):
+    """Run Ex0.py in a new process; return the exit code and all its output."""
     result = subprocess.run([sys.executable, str(ROOT / "Ex0.py"), *map(str, args)],
                             capture_output=True, text=True, timeout=300)
     return result.returncode, result.stdout + result.stderr
@@ -27,6 +28,7 @@ def volume(tmp_path):
 
 
 def count_frames(path):
+    """Number of frames in the video and the size of the first one."""
     imageio = pytest.importorskip("imageio.v2")
     with imageio.get_reader(path) as reader:
         frames = [frame for frame in reader]

@@ -1,3 +1,4 @@
+"""Tests of projector.py: helpers, known answers, fast vs reference, performance."""
 import time
 from pathlib import Path
 
